@@ -17,3 +17,6 @@ node_modules/
 
 # Trang bình chọn theme chạy trên nền tảng riêng, không dùng ngoài máy
 **/BinhChon_MauSlide.html
+
+# Tài liệu quản lý nội bộ của nhóm (yêu cầu môn, phân công, câu hỏi hỏi thầy) – chỉ giữ trên máy
+00_QuanLy/

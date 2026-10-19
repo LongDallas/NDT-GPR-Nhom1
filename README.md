@@ -52,7 +52,6 @@ Nhóm dùng **Radar xuyên đất (GPR) IDS Detector Duo** (ăng-ten 250 MHz và
 
 | Thư mục | Nội dung |
 |---|---|
-| [00_QuanLy/](00_QuanLy/) | Yêu cầu seminar của môn, kế hoạch phân công, câu hỏi hỏi thầy |
 | [01_Slide/](01_Slide/) | Slide `Seminar_GPR_EN_v3.pptx`, kịch bản nói (EN/VI), giải thích thuật ngữ. Ngoài ra có `HinhAnh/` (mọi hình trên slide), `_build/` (code dựng slide) và `LuuTru/` (các bản slide cũ) |
 | [02_SoDoTuyen_BanDo/](02_SoDoTuyen_BanDo/) | Sơ đồ tuyến (TikZ), file vị trí tuyến và mục tiêu (`tuyen_do.csv`, `muc_tieu.csv`), code dựng bản đồ 2D/3D, kết quả trong `ket_qua/`, ảnh hiện trường |
 | [03_DuLieuHienTruong/](03_DuLieuHienTruong/) | Dữ liệu GPR: `Data - processed/` (file ReflexW đã xử lý), `New Data/` (kênh 250 MHz và bản chú thích của nhóm), `ChuThich_VeLai/`, `BangKetQua/`, `SaoLuu/` |
