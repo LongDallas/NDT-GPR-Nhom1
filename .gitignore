@@ -1,0 +1,19 @@
+# Hệ điều hành / công cụ
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+.~*
+~$*
+.~lock.*
+
+# Bản trùng (thư mục "Ảnh thực hiện" đã có đủ ảnh)
+*.zip
+
+# Tài liệu có bản quyền của Sandmeier – chỉ giữ trên máy
+05_TaiLieu/SachReflexW/reflexw_manual.pdf
+05_TaiLieu/SachReflexW/01_DichSach_ReflexW_TiengViet.*
+05_TaiLieu/SachReflexW/hinh/
+
+# Trang bình chọn theme chạy trên nền tảng riêng, không dùng ngoài máy
+**/BinhChon_MauSlide.html

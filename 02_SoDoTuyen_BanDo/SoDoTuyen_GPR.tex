@@ -1,0 +1,115 @@
+% Sơ đồ bố trí tuyến đo GPR – khảo sát cáp ngầm và ống nước
+% Biên dịch: pdflatex SoDoTuyen_GPR.tex   (hoặc dán phần tikzpicture vào báo cáo, cần \usetikzlibrary{arrows.meta})
+% Toạ độ tính bằng mét, lấy theo tuyen_do.csv: x dọc đường, y ngang đường,
+% gốc = góc khung khảo sát ở đầu có nhãn C1–C4, mép phía nhà.
+\documentclass[border=4mm]{standalone}
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+% ---- vị trí tuyến (m) -------------------------------------------------------
+\def\Cdau{-1.3}                         % đầu tuyến dọc phía nhãn C1–C4
+\def\NOne{1.30}  \def\NTwo{2.10}  \def\NThree{2.90}  \def\NFour{3.70}  \def\NFive{4.50}   % cách đều ~0,8 m
+\def\Nmep{3.5}                          % đầu tuyến ngang phía ghế đá: sát mép đường (hiện trường xác nhận)
+
+\definecolor{tuyen}{RGB}{31,47,160}     % xanh của mũi tên tuyến
+\definecolor{tieude}{RGB}{58,118,138}
+\definecolor{mep}{RGB}{214,40,40}
+
+\begin{document}
+\begin{tikzpicture}[x=1.2cm, y=1.2cm, font=\small,
+    tuyenGPR/.style={tuyen, line width=1.1pt, -{Stealth[length=7pt, width=6pt]}},
+    nhan/.style={font=\small, text=black},
+    kichthuoc/.style={black!70, line width=0.4pt, {Bar[width=4pt]}-{Bar[width=4pt]}},
+    nha/.style={black!55, dashed, line width=0.9pt},
+    mepduong/.style={mep, dashed, line width=0.9pt, dash pattern=on 6pt off 3pt}]
+
+% ---- khung ngoài --------------------------------------------------------------
+\draw[line width=0.8pt] (-2.4,-3.45) rectangle (13.7,8.7);
+
+% ---- tiêu đề ------------------------------------------------------------------
+\node[anchor=north west, text=tieude, font=\bfseries\fontsize{19}{23}\selectfont, align=left]
+  at (-2.1,8.45) {Sơ đồ tuyến đo GPR\\[2pt]Khảo sát cáp ngầm và ống nước};
+
+% ---- ghi chú ------------------------------------------------------------------
+\begin{scope}[shift={(7.9,8.35)}]
+  \node[anchor=west, font=\bfseries\small] at (0,0) {\underline{GHI CHÚ}};
+  \draw[mepduong] (0.05,-0.45) -- (0.85,-0.45);
+  \node[anchor=west] at (1.0,-0.45) {Mép đường};
+  \draw[mep, line width=1.4pt] (0.05,-0.85) -- (0.85,-0.85);
+  \node[anchor=west] at (1.0,-0.85) {Khung khảo sát 10 m $\times$ 3,5 m};
+  \draw[nha] (0.05,-1.25) -- (0.85,-1.25);
+  \node[anchor=west] at (1.0,-1.25) {Nhà / tường};
+  \draw[black!50, fill=black!8] (0.25,-1.75) rectangle (0.65,-1.55);
+  \node[anchor=west] at (1.0,-1.65) {Ghế đá};
+  \node[anchor=east, font=\scriptsize] at (0.25,-2.05) {C1};
+  \draw[tuyenGPR] (0.3,-2.05) -- (0.85,-2.05);
+  \node[anchor=west] at (1.0,-2.05) {Tuyến dọc C1--C4: dò cáp ngầm};
+  \node[anchor=east, font=\scriptsize] at (0.25,-2.45) {N1};
+  \draw[tuyenGPR] (0.3,-2.45) -- (0.85,-2.45);
+  \node[anchor=west] at (1.0,-2.45) {Tuyến ngang N1--N5: dò ống nước};
+\end{scope}
+
+% ---- nền: nhà, vỉa hè, ghế đá, mép đường -------------------------------------
+\fill[black!4] (-2.1,3.5) rectangle (12.7,5.4);                     % vỉa hè
+\draw[nha] (-2.1,5.4) -- (12.7,5.4);
+\draw[nha] (-2.1,-0.8) -- (12.7,-0.8);
+\node[black!60, anchor=south west, font=\footnotesize] at (-2.1,5.42) {Nhà};
+\node[black!60, anchor=north west, font=\footnotesize] at (-2.1,-0.82) {Nhà};
+\node[black!60, anchor=west, font=\footnotesize\itshape] at (10.9,4.15) {Vỉa hè};
+\foreach \x in {0.2,1.1,...,9.2}
+  \draw[black!50, fill=black!8] (\x,4.75) rectangle ++(0.75,0.35);  % dãy ghế đá
+\draw[mepduong] (-2.1,0) -- (12.7,0);
+\draw[mepduong] (-2.1,3.5) -- (12.7,3.5);
+\node[mep, anchor=north west, font=\footnotesize] at (-2.1,-0.02) {mép đường};
+\node[mep, anchor=south west, font=\footnotesize] at (-2.1,3.52) {mép đường};
+
+% ---- khung khảo sát -----------------------------------------------------------
+\draw[mep, line width=1.4pt] (0,0) rectangle (10,3.5);
+
+% ---- tuyến dọc C1–C4 (C2, C4 đo ngược chiều – đi zigzag) ----------------------
+% điểm xuất phát C2, C4 hiệu chỉnh để P1 rơi vào cáp x = 2,5 m (hiện trường: cáp cắt ngang vuông góc đường)
+\draw[tuyenGPR] (\Cdau,0.5) -- (9.95,0.5);   \node[nhan, anchor=east] at (\Cdau,0.5) {C1};
+\draw[tuyenGPR] (9.04,1.5) -- (-1.9,1.5);    \node[nhan, anchor=west, fill=white, inner sep=1pt] at (9.1,1.5) {C2};
+\draw[tuyenGPR] (\Cdau,2.5) -- (9.72,2.5);   \node[nhan, anchor=east] at (\Cdau,2.5) {C3};
+\draw[tuyenGPR] (10.86,3.5) -- (-0.5,3.5);   \node[nhan, anchor=south west, fill=white, inner sep=1pt] at (10.86,3.55) {C4};
+
+% ---- tuyến ngang N1–N5 (N2, N4 đo ngược chiều – đi zigzag) -----------------------
+\foreach \x/\ten/\dai in {\NOne/N1/3.31, \NThree/N3/3.34} {
+  \draw[tuyenGPR] (\x,{\Nmep-\dai}) -- (\x,\Nmep);
+  \node[nhan, anchor=north] at (\x,-0.1) {\ten};
+}
+\foreach \x/\ten/\dai in {\NTwo/N2/3.34, \NFour/N4/3.20} {
+  \draw[tuyenGPR] (\x,\Nmep) -- (\x,{\Nmep-\dai});
+  \node[nhan, anchor=north] at (\x,-0.1) {\ten};
+}
+\draw[tuyenGPR] (\NFive,{\Nmep-3.20}) -- (\NFive,\Nmep);
+\node[nhan, anchor=north, align=center] at (\NFive,-0.1) {N5\\[-2pt]{\scriptsize(đo 2 lần)}};
+
+% ---- kích thước ---------------------------------------------------------------
+\foreach \a/\b/\t in {0/0.5/{0,5 m}, 0.5/1.5/{1 m}, 1.5/2.5/{1 m}, 2.5/3.5/{1 m}} {
+  \draw[kichthuoc] (11.0,\a) -- (11.0,\b);
+  \node[font=\scriptsize, anchor=west] at (11.05,{(\a+\b)/2}) {\t};
+}
+\draw[kichthuoc] (12.2,0) -- (12.2,3.5);
+\node[font=\scriptsize, anchor=west, rotate=90, anchor=south] at (12.25,1.75) {3,5 m};
+\draw[kichthuoc] (0,-1.85) -- (10,-1.85);
+\node[font=\scriptsize, fill=white, inner sep=1pt] at (7,-1.85) {10 m};
+\foreach \x in {\NOne,\NTwo,\NThree,\NFour,\NFive}
+  \draw[black!60, line width=0.4pt] (\x,-1.75) -- (\x,-1.95);
+\node[font=\scriptsize, black!70, anchor=north] at (\NOne,-1.95) {1,30};
+\node[font=\scriptsize, black!70, anchor=north] at (\NTwo,-1.95) {2,10};
+\node[font=\scriptsize, black!70, anchor=north] at (\NThree,-1.95) {2,90};
+\node[font=\scriptsize, black!70, anchor=north] at (\NFour,-1.95) {3,70};
+\node[font=\scriptsize, black!70, anchor=north] at (\NFive,-1.95) {4,50};
+
+% ---- trục đường + chú thích ---------------------------------------------------
+\draw[mep, line width=1pt, {Stealth[length=6pt]}-{Stealth[length=6pt]}] (3.0,-2.5) -- (7.0,-2.5);
+\node[font=\small, fill=white, inner sep=2pt] at (5,-2.5) {Trục đường khảo sát (x)};
+\node[anchor=south west, font=\scriptsize\itshape, black!70, align=left] at (-2.2,-3.4)
+  {N1--N5 cách đều khoảng 0,8 m (vị trí dọc đường tính bằng m); đầu phía ghế đá sát mép đường.\\
+   Đi zigzag: C2, C4, N2, N4 đo ngược chiều (nhóm đã lật các tuyến này trong ReflexW).\\
+   Điểm xuất phát C2, C4 hiệu chỉnh theo cáp (cắt ngang vuông góc ở x $\approx$ 2,5 m, theo dấu đánh tại hiện trường).};
+\end{tikzpicture}
+\end{document}

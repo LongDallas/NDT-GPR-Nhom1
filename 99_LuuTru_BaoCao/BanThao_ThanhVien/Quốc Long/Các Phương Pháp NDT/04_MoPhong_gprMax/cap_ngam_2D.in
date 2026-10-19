@@ -1,0 +1,36 @@
+## Mo hinh 2D: cap ngam kim loai va ong PVC trong dat (de tai GPR - Cac phuong phap NDT)
+## Chay: python -m gprMax cap_ngam_2D.in -n 171
+## Gop: python -m tools.outputfiles_merge cap_ngam_2D
+## Ve:  python -m tools.plot_Bscan cap_ngam_2D_merged.out Ez
+## Don vi: m, s, S/m. Truc y huong len; mat dat o y = 0.85 m.
+
+#title: Cap dien (PEC) va ong PVC rong trong dat cat pha am
+#domain: 2.0 1.0 0.005
+#dx_dy_dz: 0.005 0.005 0.005
+#time_window: 25e-9
+
+## Vat lieu: eps_r  sigma(S/m)  mu_r  sigma*  ten
+#material: 9 0.005 1 0 dat_cat_pha_am
+#material: 3 0 1 0 pvc
+
+## Nguon: xung Ricker 700 MHz (tuong ung anten 700 MHz cua IDS Detector Duo)
+#waveform: ricker 1 700e6 xung_700MHz
+#hertzian_dipole: z 0.10 0.90 0 xung_700MHz
+#rx: 0.14 0.90 0
+#src_steps: 0.01 0 0
+#rx_steps: 0.01 0 0
+
+## Nen dat: y tu 0 den 0.85 m
+#box: 0 0 0 2.0 0.85 0.005 dat_cat_pha_am
+
+## Doi tuong 1: cap dien kim loai (PEC), ban kinh 2.5 cm, tam o do sau 0.40 m
+#cylinder: 0.60 0.45 0 0.60 0.45 0.005 0.025 pec
+
+## Doi tuong 2: ong PVC D110 (thanh 5 mm) chua khong khi, tam o do sau 0.60 m
+#cylinder: 1.30 0.25 0 1.30 0.25 0.005 0.055 pvc
+#cylinder: 1.30 0.25 0 1.30 0.25 0.005 0.050 free_space
+
+## Goi y bai tap (Chuong 3.1):
+## 1) Doi eps_r cua dat (5 / 9 / 15) -> so sanh do mo cua hyperbol, tinh v = c/sqrt(eps_r)
+## 2) Doi tan so 250 MHz va 700 MHz -> so sanh do phan giai va do sau xuyen
+## 3) Thay ong PVC chua khong khi bang ong chua nuoc (eps_r = 80) -> doi pha phan xa

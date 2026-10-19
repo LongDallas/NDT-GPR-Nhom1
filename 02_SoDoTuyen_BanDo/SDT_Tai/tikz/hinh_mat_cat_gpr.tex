@@ -1,0 +1,276 @@
+% !TEX program = lualatex
+% Vẽ lại 3 hình trong ../ket_qua/ bằng TikZ/pgfplots (mỗi hình là một trang 16:9):
+%   trang 1 = Hinh1_Cap_MatCatGPR, trang 2 = Hinh2_OngNuoc_MatCatGPR, trang 3 = Hinh3_VungTinHieu
+% Nền B-scan (dữ liệu radar) lấy từ nen/*.png, số liệu từ so_lieu.tex – cả hai do xuat_nen_tikz.py tạo ra;
+% mọi thứ khác (trục thời gian/độ sâu, mũi tên, hyperbol, khung kích thước, sơ đồ tuyến, chữ) vẽ bằng TikZ.
+% Vị trí, phân loại dị thường theo chú thích của nhóm (New Data); C2, C4, N2, N4 đo ngược chiều nên đã lật.
+% Biên dịch:  python3 xuat_nen_tikz.py && lualatex hinh_mat_cat_gpr.tex
+%   Bản tiếng Anh:  lualatex -jobname=hinh_mat_cat_gpr_EN "\def\BanEN{}\input{hinh_mat_cat_gpr}"
+\documentclass[tikz,border=0pt]{standalone}
+\usepackage{fontspec}
+\setmainfont{DejaVuSans}[Extension=.ttf, UprightFont=*, BoldFont=*-Bold]
+\newfontfamily\serifdam{DejaVuSerif}[Extension=.ttf, UprightFont=*-Bold]
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+% số (nhãn trục, \inso) in bằng font chữ thường thay vì font toán, giống matplotlib
+\pgfkeys{/pgf/number format/assume math mode=true}
+\pgfplotsset{every axis/.append style={
+  xticklabel={\pgfmathprintnumber{\tick}}, yticklabel={\pgfmathprintnumber{\tick}}}}
+\usetikzlibrary{arrows.meta}
+\usepackage{contour}
+\contourlength{0.9pt}
+\usepackage{xstring}
+
+% ---------------- NGÔN NGỮ ----------------
+\newif\ifEN
+\ifdefined\BanEN \ENtrue \fi
+\newcommand\chu[2]{\ifEN#2\else#1\fi}
+
+% ---------------- SỐ LIỆU (so_lieu.tex do xuat_nen_tikz.py ghi) ----------------
+\input{so_lieu}
+\newcommand\ct[3]{\csname ct-#1-#2-#3\endcsname}   % điểm chú thích: \ct{tuyến}{ký hiệu}{x|t|v|sau|mx|my}
+\newcommand\dai[1]{\csname dai-#1\endcsname}       % chiều dài tuyến (m)
+
+% ---------------- MÀU, CHỮ ----------------
+\definecolor{tieude}{HTML}{6F42C1}
+\definecolor{chuthich}{HTML}{3A768A}
+\definecolor{tentuyen}{HTML}{1F6FB2}
+\definecolor{do}{HTML}{E03131}
+\definecolor{dokhung}{HTML}{D62828}
+\definecolor{tuyendam}{HTML}{1F2FA0}
+\definecolor{tuyennhat}{HTML}{ADB5BD}
+\definecolor{mauP}{HTML}{D62828}   % P: cáp / vật kim loại
+\definecolor{mauO}{HTML}{F08C00}   % O: dị thường
+\definecolor{mauA}{HTML}{1C7ED6}   % A: ống nước
+\newcommand\co[1]{\fontsize{#1}{\fpeval{1.2*#1}}\selectfont}
+% in số: \inso{biểu thức}{số chữ số thập phân}
+\newcommand\inso[2]{\pgfmathparse{#1}\pgfmathprintnumber[fixed,fixed zerofill,precision=#2]{\pgfmathresult}}
+% tính trước thành macro (dùng khi chữ nằm trong \contour): \tinhSo{\tên}{biểu thức}{số chữ số thập phân}
+\newcommand\tinhSo[3]{\pgfmathparse{#2}\pgfmathprintnumberto[fixed,fixed zerofill,precision=#3]{\pgfmathresult}{#1}}
+
+% Khung 16:9 cỡ 14 × 7.875 inch; tọa độ (x, y) trong tikzpicture là tỉ lệ khung hình (0–1), như fig.text của matplotlib
+\tikzset{
+  khung/.style={x=14in, y=7.875in},
+  tieu de/.style={font=\serifdam\co{15}, text=tieude},
+  ten tuyen/.style={font=\serifdam\co{14}, text=tentuyen, anchor=north},
+  chu chan/.style={font=\co{7}, text=black!60, anchor=south east, align=right},
+}
+% Chữ lớn màu xanh ngọc có bóng đổ: \chuBong{(x,y)}{kiểu node}{chữ}
+\newcommand\chuBong[3]{%
+  \node[font=\serifdam\fontsize{16}{26}\selectfont, align=center, text=black!35, xshift=1.5pt, yshift=-1.5pt, #2] at #1 {#3};
+  \node[font=\serifdam\fontsize{16}{26}\selectfont, align=center, text=chuthich, #2] at #1 {#3};}
+\newcommand\tieuDe[1]{\path[use as bounding box] (0,0) rectangle (1,1);
+  \node[tieu de] at (0.5,0.965) {#1};}
+
+% ---------------- MẶT CẮT B-SCAN ----------------
+% khoảng cách ở trục trên, thời gian bên trái, độ sâu bên phải – như ReflexW.
+% Độ sâu theo 2 lớp (bê tông \VBT{} m/ns tới \TBT{} ns, đất \VDAT{} m/ns) nên trục phải không tuyến tính:
+% vạch đặt tại thời gian ứng với mỗi độ sâu (\VachTA/\VachDA bước 0,25 m; \VachTB/\VachDB bước 0,2 m).
+\newcommand\dungVach[1]{\edef\vachT{\csname VachT#1\endcsname}\edef\vachD{\csname VachD#1\endcsname}}
+\dungVach{A}
+\pgfplotsset{
+  bscan/.style={scale only axis, axis on top, enlargelimits=false, anchor=south west,
+    y dir=reverse, ymin=0, tick align=outside,
+    xtick pos=upper, xticklabel pos=upper, ytick pos=left,
+    xlabel={\chu{Khoảng cách [m]}{Distance [m]}}, ylabel={\chu{Thời gian [ns]}{Time [ns]}},
+    label style={font=\co{9}}, tick label style={font=\co{8}},
+    xlabel style={yshift=-2pt}, ylabel shift=-2pt},
+  do sau/.style={scale only axis, enlargelimits=false, anchor=south west,
+    y dir=reverse, ymin=0, xmin=0, xmax=1, axis x line=none, axis y line*=right,
+    ytick/.expand once=\vachT, yticklabels/.expand once=\vachD,
+    tick align=outside, ylabel={\chu{Độ sâu [m]}{Depth [m]}}, ylabel shift=-5pt,
+    label style={font=\co{8}}, tick label style={font=\co{8}}},
+}
+% \matCat{x}{y}{rộng}{cao}{x min}{x max}{t max}{ảnh nền}{nội dung vẽ thêm}
+\newcommand\matCat[9]{%
+  \begin{axis}[bscan, at={(#1*14in,#2*7.875in)}, width=#3*14in, height=#4*7.875in, xmin=#5, xmax=#6, ymax=#7]
+    \addplot graphics[xmin=#5, xmax=#6, ymin=0, ymax=#7] {nen/#8.png};
+    #9
+  \end{axis}
+  \begin{axis}[do sau, at={(#1*14in,#2*7.875in)}, width=#3*14in, height=#4*7.875in, ymax=#7]
+    \addplot[draw=none] coordinates {(0,0)};
+  \end{axis}}
+% nhãn ô (a), (b)… ở góc dưới-trái
+\newcommand\nhan[1]{\node[anchor=south west, fill=white, fill opacity=0.8, text opacity=1, inner sep=1.5pt,
+  font=\bfseries\co{12}] at (axis description cs:0.03,0.04) {#1};}
+% mũi tên trắng chỉ lên đỉnh hyperbol, nhãn nền màu theo loại: \muiTen{x}{t}{nhãn}{P|O|A}
+\newcommand\muiTen[4]{%
+  \draw[white, line width=3.2pt, -{Triangle[width=9pt, length=7pt]}] (axis cs:#1,#2+8) -- (axis cs:#1,#2+1);
+  \ifx&#3&\else
+  \node[anchor=north, fill=mau#4, draw=white, line width=0.6pt, rounded corners=2pt, text=white,
+    font=\bfseries\co{7.5}, inner sep=1.5pt] at (axis cs:#1,#2+8.6) {#3};\fi}
+% mũi tên tới một điểm chú thích của nhóm: \diem{tuyến}{ký hiệu}{nhãn}{P|O|A}
+\newcommand\diem[4]{\muiTen{\ct{#1}{#2}{x}}{\ct{#1}{#2}{t}}{#3}{#4}}
+% hyperbol lý thuyết qua 2 lớp, dùng v_rms tới đỉnh: t(x) = sqrt(t0² + (2(x − x0)/v)²): \hyperbol{tuyến}{ký hiệu}
+\newcommand\hyperbol[2]{%
+  \addplot[black, line width=1.6pt, domain={\ct{#1}{#2}{x}-0.75}:{\ct{#1}{#2}{x}+0.75}, samples=200]
+    {sqrt((\ct{#1}{#2}{t})^2 + (2*(x-(\ct{#1}{#2}{x}))/\ct{#1}{#2}{v})^2)};
+  \node[anchor=south, fill=white, fill opacity=0.85, text opacity=1, inner sep=0.5pt, font=\co{8}]
+    at (axis cs:\ct{#1}{#2}{x},\ct{#1}{#2}{t}-1.5) {\inso{\ct{#1}{#2}{v}}{3}};}
+% ô chữ trắng góc dưới-phải
+\newcommand\oGhiChu[1]{\node[anchor=south east, align=right, fill=white, fill opacity=0.85, text opacity=1,
+  inner sep=1.5pt, font=\co{7.5}] at (axis description cs:0.97,0.04) {#1};}
+
+% ---------------- SƠ ĐỒ TUYẾN THU NHỎ (theo ../../tuyen_do.csv và ../../muc_tieu.csv) ----------------
+% ô matplotlib [0.40, 0.07, 0.27, 0.33], tỉ lệ 1:1, x ∈ [−2, 11], y ∈ [4.2, −1.3] → 0.2908 in / m
+\newcommand\soDoTuyen[1]{% #1 = các tuyến tô đậm, cách nhau dấu phẩy
+  \def\noiBat{#1}%
+  \node[anchor=south, font=\co{8}, text=black!70, inner sep=0pt] at (7.49in, 2.651in+6pt)
+    {\chu{Sơ đồ tuyến (mũi tên: chiều kéo máy; đậm: tuyến trên hình)}{Survey lines (arrow: scan direction; bold: lines shown)}};
+  \begin{scope}[shift={(6.1816in, 2.2729in)}, x=0.2908in, y=-0.2908in]
+    \draw[dokhung, line width=1.2pt] (0,0) rectangle (10,3.5);
+    \foreach \ten/\xa/\ya/\xb/\yb/\xn/\yn in \DanhSachTuyen {
+      \IfSubStr{,\noiBat,}{,\ten,}{\def\mau{tuyendam}\def\day{2.2pt}\def\dam{\bfseries}}%
+                                  {\def\mau{tuyennhat}\def\day{1pt}\def\dam{}}%
+      \draw[\mau, line width=\day, -{Triangle[width=5pt, length=6pt]}] (\xa,\ya) -- (\xb,\yb);
+      \node[text=\mau, font=\dam\co{7}] at (\xn,\yn) {\ten};}
+    \edef\veCap{\noexpand\draw[mauP, line width=2.2pt] \DuongCap;}\veCap
+    \edef\veOng{\noexpand\draw[mauA, line width=2.2pt] \DuongOng;}\veOng
+    \foreach \mx/\my in \DanhSachOng {\fill[mauA, draw=white, line width=0.5pt] (\mx,\my) circle (2pt);}
+    \foreach \k/\mx/\my in \DanhSachDiem {
+      \StrLeft{\k}{1}[\loai]%
+      \fill[mau\loai, draw=white, line width=0.6pt] (\mx,\my) circle (2.6pt);
+      \IfStrEq{\loai}{P}{}{\node[anchor=south west, text=mau\loai, font=\bfseries\co{6}, inner sep=0.5pt]
+        at (\mx+0.1,\my-0.05) {\k};}}
+  \end{scope}
+  % chú giải dưới sơ đồ
+  \begin{scope}[shift={(6.05in, 0.80in)}, font=\co{6.5}]
+    \draw[mauP, line width=2.2pt] (0,0) -- (0.25in,0); \fill[mauP] (0.125in,0) circle (2pt);
+    \node[anchor=west] at (0.28in,0) {\chu{P1: cáp}{P1: cable}};
+    \draw[mauA, line width=2.2pt] (0.95in,0) -- (1.2in,0); \fill[mauA] (1.075in,0) circle (2pt);
+    \node[anchor=west] at (1.23in,0) {\chu{ống nước (A1, N4, N5)}{water pipe (A1, N4, N5)}};
+    \fill[mauO, draw=white] (2.55in,0) circle (2.5pt);
+    \node[anchor=west] at (2.6in,0) {\chu{O: dị thường}{O: anomaly}};
+  \end{scope}}
+
+\newcommand\chanTrang[1]{\node[chu chan] at (0.99,0.01) {#1};}
+\newcommand\chanTrangMatCat[1]{\chanTrang{%
+  \chu{GPR IDS Detector Duo, kênh 250 MHz; vị trí và phân loại theo chú thích của nhóm; độ sâu: bê tông v = \VBT{} m/ns (0–\inso{\TBT}{0} ns), đất v = \VDAT{} m/ns;\\
+       C2, C4, N2, N4 đo ngược chiều nên đã lật; #1: Kirchhoff migration (v = \VMIG) trong ReflexW}%
+      {GPR IDS Detector Duo, 250 MHz channel; positions and classes from the team's picks; depth: concrete v = \VBT{} m/ns (0–\inso{\TBT}{0} ns), soil v = \VDAT{} m/ns;\\
+       C2, C4, N2, N4 scanned in reverse and flipped; #1: Kirchhoff migration (v = \VMIG) in ReflexW}}}
+
+\begin{document}
+
+% =====================================================================
+% HÌNH 1 – CÁP NGẦM, TUYẾN DỌC C1–C4
+% =====================================================================
+\begin{tikzpicture}[khung]
+  \tieuDe{\chu{XÁC ĐỊNH CÁP NGẦM BẰNG GPR – TUYẾN DỌC C1–C4}{LOCATING THE BURIED CABLE WITH GPR – LINES C1–C4}}
+  % (a) C1 cả tuyến: P1 (cáp) + các dị thường O1–O3, hyperbol lý thuyết trên P1
+  \matCat{0.06}{0.55}{0.29}{0.33}{0}{\dai{C1}}{\TMAX}{h1a}{%
+    \diem{C1}{O1}{O1}{O}
+    \diem{C1}{P1}{\chu{P1 · cáp}{P1 · cable}}{P}
+    \diem{C1}{O2}{O2}{O}
+    \diem{C1}{O3}{O3}{O}
+    \hyperbol{C1}{P1}
+    \nhan{(a)}}
+  % (b) C3
+  \matCat{0.06}{0.09}{0.29}{0.33}{0}{6}{\TMAX}{h1b}{%
+    \diem{C3}{O5}{O5}{O}
+    \diem{C3}{P1}{\chu{P1 · cáp}{P1 · cable}}{P}
+    \nhan{(b)}}
+  % (c) C1 sau migration
+  \matCat{0.42}{0.50}{0.23}{0.38}{0}{6}{\TMAX}{h1c}{%
+    \diem{C1}{P1}{\chu{P1 · cáp}{P1 · cable}}{P}
+    \nhan{(c)}}
+  % (d) kích thước biểu kiến: độ rộng tại nửa biên độ bao trên C1 sau migration
+  \pgfmathsetmacro\xc{(\HkXa+\HkXb)/2}\pgfmathsetmacro\tc{(\HkTa+\HkTb)/2}
+  \tinhSo\rongCm{(\HkXb-\HkXa)*100}{0}\tinhSo\caoCm{\HkCaoCm}{0}
+  \dungVach{B}
+  \matCat{0.75}{0.50}{0.20}{0.38}{\HkDXmin}{\HkDXmax}{\HkDTmax}{h1d}{%
+    \draw[do, line width=1.6pt] (axis cs:\HkXa,\HkTa) rectangle (axis cs:\HkXb,\HkTb);
+    \draw[white, line width=1.4pt, {Stealth[length=5pt]}-{Stealth[length=5pt]}]
+      (axis cs:\HkXa,\HkTb+1.2) -- (axis cs:\HkXb,\HkTb+1.2);
+    \draw[white, line width=1.4pt, {Stealth[length=5pt]}-{Stealth[length=5pt]}]
+      (axis cs:\HkXb+0.06,\HkTa) -- (axis cs:\HkXb+0.06,\HkTb);
+    \node[anchor=north, text=white, font=\bfseries\co{9}, inner sep=1pt] at (axis cs:\xc,\HkTb+2.2)
+      {\contour{black}{\rongCm{} cm}};
+    \node[anchor=west, text=white, font=\bfseries\co{9}, inner sep=1pt] at (axis cs:\HkXb+0.1,\tc)
+      {\contour{black}{\caoCm{} cm}};
+    \oGhiChu{\chu{sâu tới đỉnh sau migration}{depth to top after migration} ≈ \inso{\HkSau}{2} m\\
+             \chu{(kích thước biểu kiến, giới hạn}{(apparent size, limited by}\\
+             \chu{độ phân giải}{resolution} ≈ λ/4 = \inso{\VDAT/0.25/4*100}{0} cm)}
+    \nhan{(d)}}
+  \dungVach{A}
+  \node[ten tuyen] at (0.205,0.505) {\chu{Tuyến}{Line} C1};
+  \node[ten tuyen] at (0.205,0.045) {\chu{Tuyến}{Line} C3};
+  \soDoTuyen{C1,C3}
+  \chuBong{(0.83,0.40)}{anchor=north}{%
+    \chu{Mặt cắt GPR dò cáp ngầm\\(a) Tuyến C1; (b) Tuyến C3;\\(c) Tuyến C1 sau migration;\\(d) Tính kích thước dị vật}%
+        {GPR sections over the cable\\(a) Line C1; (b) Line C3;\\(c) Line C1 after migration;\\(d) Apparent size of the target}}
+  \chanTrangMatCat{(c), (d)}
+\end{tikzpicture}
+
+% =====================================================================
+% HÌNH 2 – ỐNG NƯỚC, TUYẾN NGANG N1–N5
+% =====================================================================
+\begin{tikzpicture}[khung]
+  \tieuDe{\chu{XÁC ĐỊNH ỐNG NƯỚC BẰNG GPR – TUYẾN NGANG N1–N5}{LOCATING THE WATER PIPE WITH GPR – LINES N1–N5}}
+  % (a) N2 (đã lật về cùng chiều N1), hyperbol lý thuyết trên A1
+  \matCat{0.06}{0.55}{0.29}{0.33}{0}{\dai{N2}}{\TMAX}{h2a}{%
+    \diem{N2}{A1}{\chu{A1 · ống nước}{A1 · water pipe}}{A}
+    \hyperbol{N2}{A1}
+    \nhan{(a)}}
+  % (b) N1 – nhóm không thấy hyperbol rõ
+  \matCat{0.06}{0.09}{0.29}{0.33}{0}{\dai{N1}}{\TMAX}{h2b}{%
+    \node[align=center, fill=black!75, fill opacity=0.85, text opacity=1, text=white, draw=white,
+      rounded corners=3pt, font=\bfseries\co{10}] at (axis description cs:0.5,0.55)
+      {\chu{Không thấy hyperbol rõ\\(chỉ phản xạ phẳng lớp mặt)}{No clear hyperbola\\(flat near-surface reflections only)}};
+    \nhan{(b)}}
+  % (c) N2 sau migration
+  \matCat{0.42}{0.50}{0.23}{0.38}{0}{\dai{mig-N2}}{\TMAX}{h2c}{%
+    \diem{N2}{A1}{\chu{A1 · ống nước}{A1 · water pipe}}{A}
+    \nhan{(c)}}
+  % (d) phóng to hyperbol A1 (sau migration chưa hội tụ nên không đo kích thước)
+  \pgfmathsetmacro\dXmin{\ct{N2}{A1}{x}-0.8}\pgfmathsetmacro\dXmax{\ct{N2}{A1}{x}+0.8}\pgfmathsetmacro\dTmax{\ct{N2}{A1}{t}+14}
+  \dungVach{B}
+  \matCat{0.75}{0.50}{0.20}{0.38}{\dXmin}{\dXmax}{\dTmax}{h2d}{%
+    \diem{N2}{A1}{\chu{A1 · ống nước}{A1 · water pipe}}{A}
+    \hyperbol{N2}{A1}
+    \oGhiChu{\chu{sâu tới đỉnh}{depth to top} ≈ \inso{\ct{N2}{A1}{sau}}{2} m}
+    \nhan{(d)}}
+  \dungVach{A}
+  \node[ten tuyen] at (0.205,0.505) {\chu{Tuyến}{Line} N2};
+  \node[ten tuyen] at (0.205,0.045) {\chu{Tuyến}{Line} N1};
+  \soDoTuyen{N1,N2}
+  \chuBong{(0.83,0.40)}{anchor=north}{%
+    \chu{Mặt cắt GPR dò ống nước\\(a) Tuyến N2; (b) Tuyến N1;\\(c) Tuyến N2 sau migration;\\(d) Phóng to hyperbol ống nước}%
+        {GPR sections over the water pipe\\(a) Line N2; (b) Line N1;\\(c) Line N2 after migration;\\(d) Zoom on the pipe hyperbola}}
+  \chanTrangMatCat{(c)}
+\end{tikzpicture}
+
+% =====================================================================
+% HÌNH 3 – VÙNG TÍN HIỆU QUAN TÂM TRÊN TUYẾN C1
+% =====================================================================
+\begin{tikzpicture}[khung]
+  \tieuDe{\chu{XÁC ĐỊNH CÁP NGẦM – VÙNG TÍN HIỆU QUAN TÂM TRÊN TUYẾN C1}{LOCATING THE CABLE – SIGNAL OF INTEREST ON LINE C1}}
+  % (a) đã lọc, khung đỏ quanh hyperbol cáp P1
+  \matCat{0.06}{0.45}{0.36}{0.40}{0}{\dai{C1}}{\TMAX}{h3a}{%
+    \draw[do, line width=2.2pt] (axis cs:\HbHopX,\HbHopT) rectangle (axis cs:\HbHopX+1.6,\HbHopT+14);
+    \coordinate (hopDay) at (axis cs:\HbHopX+0.8,\HbHopT+14);}
+  % (b) sau Kirchhoff migration
+  \matCat{0.57}{0.45}{0.36}{0.40}{0}{\dai{mig-C1}}{\TMAX}{h3b}{%
+    \diem{C1}{P1}{\chu{P1 · cáp}{P1 · cable}}{P}}
+  \chuBong{(0.24,0.375)}{anchor=base, font=\serifdam\co{13}}{\chu{(a) Số liệu đã lọc (dewow, xóa nền, gain)}{(a) Filtered data (dewow, background removal, gain)}}
+  \chuBong{(0.75,0.375)}{anchor=base, font=\serifdam\co{13}}{\chu{(b) Sau Kirchhoff migration}{(b) After Kirchhoff migration}}
+  % (c) phóng to vùng trong khung đỏ (số liệu trước migration)
+  \pgfmathsetmacro\cXmax{\HbHopX+1.6}\pgfmathsetmacro\cTmax{\HbHopT+14}
+  \begin{axis}[scale only axis, axis on top, enlargelimits=false, anchor=south west,
+      at={(0.43*14in,0.12*7.875in)}, width=0.15*14in, height=0.22*7.875in,
+      xmin=\HbHopX, xmax=\cXmax, ymin=\HbHopT, ymax=\cTmax, y dir=reverse,
+      tick align=outside, xtick pos=lower, ytick pos=left, tick label style={font=\co{7}},
+      axis line style={draw=do, line width=2pt}, every tick/.style={black}]
+    \addplot graphics[xmin=\HbHopX, xmax=\cXmax, ymin=\HbHopT, ymax=\cTmax] {nen/h3c.png};
+    \coordinate (oTren) at (axis description cs:0.5,1);
+  \end{axis}
+  \draw[do, line width=2.2pt, -{Triangle[width=9pt, length=10pt]}] (hopDay) -- (oTren);
+  \chuBong{(0.60,0.23)}{anchor=west, align=left, font=\serifdam\fontsize{13}{21}\selectfont}{\chu{(c) Vùng tín hiệu\\quan tâm}{(c) Signal of\\interest}}
+  \chuBong{(0.5,0.055)}{anchor=base, font=\serifdam\co{18}}{%
+    \chu{Mặt cắt GPR tuyến C1 – cáp ngầm (P1) ở x ≈ \inso{\ct{C1}{P1}{x}}{1} m, sâu tới đỉnh ≈ \inso{\ct{C1}{P1}{sau}}{2} m}%
+        {GPR section, line C1 – cable (P1) at x ≈ \inso{\ct{C1}{P1}{x}}{1} m, depth to top ≈ \inso{\ct{C1}{P1}{sau}}{2} m}}
+  \chanTrang{\chu{GPR IDS Detector Duo, kênh 250 MHz; độ sâu: bê tông v = \VBT, đất v = \VDAT{} m/ns}%
+                 {GPR IDS Detector Duo, 250 MHz channel; depth: concrete v = \VBT, soil v = \VDAT{} m/ns}}
+\end{tikzpicture}
+
+\end{document}
